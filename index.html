@@ -1,0 +1,210 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STUCO BOOST!</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #fff1f7;
+      color: #35232d;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      border-radius: 28px;
+      padding: 32px 24px;
+      text-align: center;
+      box-shadow: 0 12px 40px #e9b9d0;
+    }
+
+    .tag {
+      color: #d94d91;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+
+    h1 {
+      font-size: 34px;
+      margin: 12px 0;
+    }
+
+    .subtitle {
+      color: #8b7180;
+      margin-bottom: 24px;
+    }
+
+    select {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid #f2c1d9;
+      border-radius: 14px;
+      font-size: 16px;
+      background: #fff9fc;
+      margin-bottom: 20px;
+    }
+
+    .boost-button {
+      width: 100%;
+      border: none;
+      border-radius: 22px;
+      padding: 24px 12px;
+      background: #f05aab;
+      color: white;
+      font-size: 32px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 7px 0 #ce3788;
+      transition: transform 0.1s;
+    }
+
+    .boost-button:active {
+      transform: translateY(5px);
+      box-shadow: 0 2px 0 #ce3788;
+    }
+
+    .boost-button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .count-label {
+      margin-top: 28px;
+      color: #8b7180;
+    }
+
+    .count {
+      font-size: 42px;
+      font-weight: bold;
+      color: #d94d91;
+      margin: 6px 0;
+    }
+
+    #message {
+      min-height: 24px;
+      color: #a13d76;
+      font-size: 14px;
+      margin-top: 16px;
+    }
+
+    .footer {
+      margin-top: 24px;
+      font-size: 12px;
+      color: #b29aa8;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+    <div class="tag">YOUR STUDENT COUNCIL</div>
+    <h1>STUCO BOOST! 💗</h1>
+    <p class="subtitle">Show your support for your STUCO member!</p>
+
+    <select id="memberSelect">
+      <option value="president">President</option>
+      <option value="vice-president">Vice President</option>
+      <option value="secretary">Secretary</option>
+      <option value="media-manager">Media Manager</option>
+      <option value="treasurer">Treasurer</option>
+      <option value="website-creator">Website Creator</option>
+    </select>
+
+    <button id="boostButton" class="boost-button">
+      BOOST!
+    </button>
+
+    <div class="count-label">TOTAL BOOSTS</div>
+    <div id="count" class="count">0</div>
+    <div id="message">Choose a member and give them a boost!</div>
+
+    <div class="footer">STUCO • Student Council</div>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "https://gzrqpgxfonnaumudwnyz.supabase.co/rest/v1/";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_qPYjhK35SDaF3UGdT-hGzw_Pq-6ZeP6";
+
+    const supabase = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
+
+    const select = document.getElementById("memberSelect");
+    const button = document.getElementById("boostButton");
+    const count = document.getElementById("count");
+    const message = document.getElementById("message");
+
+    // If the link has ?member=president, select that member automatically.
+    const params = new URLSearchParams(window.location.search);
+    const requestedMember = params.get("member");
+
+    if (
+      requestedMember &&
+      [...select.options].some(option => option.value === requestedMember)
+    ) {
+      select.value = requestedMember;
+    }
+
+    async function loadCount() {
+      const { data, error } = await supabase
+        .from("member_boosts")
+        .select("boosts")
+        .eq("member_slug", select.value)
+        .single();
+
+      if (error) {
+        message.textContent = "Couldn't load the count. Check your connection.";
+        console.error(error);
+        return;
+      }
+
+      count.textContent = data.boosts;
+    }
+
+    select.addEventListener("change", () => {
+      message.textContent = "Ready to boost!";
+      loadCount();
+    });
+
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      message.textContent = "Adding your boost...";
+
+      const { data, error } = await supabase.rpc("boost_member", {
+        p_member_slug: select.value
+      });
+
+      if (error) {
+        message.textContent = "Boost didn't go through. Please try again.";
+        console.error(error);
+      } else {
+        count.textContent = data;
+        message.textContent = "BOOST added! Thank you 💗";
+      }
+
+      button.disabled = false;
+    });
+
+    loadCount();
+  </script>
+</body>
+</html>
