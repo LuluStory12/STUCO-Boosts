@@ -9,9 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -42,15 +40,9 @@
       letter-spacing: 2px;
     }
 
-    h1 {
-      font-size: 34px;
-      margin: 12px 0;
-    }
+    h1 { font-size: 34px; margin: 12px 0; }
 
-    .subtitle {
-      color: #8b7180;
-      margin-bottom: 24px;
-    }
+    .subtitle { color: #8b7180; margin-bottom: 24px; }
 
     select {
       width: 100%;
@@ -73,7 +65,6 @@
       font-weight: 900;
       cursor: pointer;
       box-shadow: 0 7px 0 #ce3788;
-      transition: transform 0.1s;
     }
 
     .boost-button:active {
@@ -81,15 +72,9 @@
       box-shadow: 0 2px 0 #ce3788;
     }
 
-    .boost-button:disabled {
-      opacity: 0.6;
-      cursor: wait;
-    }
+    .boost-button:disabled { opacity: 0.6; cursor: wait; }
 
-    .count-label {
-      margin-top: 28px;
-      color: #8b7180;
-    }
+    .count-label { margin-top: 28px; color: #8b7180; }
 
     .count {
       font-size: 42px;
@@ -128,9 +113,7 @@
       <option value="website-creator">Website Creator</option>
     </select>
 
-    <button id="boostButton" class="boost-button">
-      BOOST!
-    </button>
+    <button id="boostButton" class="boost-button">BOOST!</button>
 
     <div class="count-label">TOTAL BOOSTS</div>
     <div id="count" class="count">0</div>
@@ -140,21 +123,24 @@
   </main>
 
   <script>
- const SUPABASE_URL = "https://gzrqpgxfonnaumudwnyz.supabase.co";
+    // Supabase project details
+    const SUPABASE_URL = "https://gzrqpgxfonnaumudwnyz.supabase.co";
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_qPYjhK35SDaF3UGdT-hGzw_Pq-6ZeP6";
 
-   const stucoClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
+    // Create the Supabase client
+    const stucoClient = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
 
-window.stucoClient = stucoClient;
+    window.stucoClient = stucoClient;
+
     const select = document.getElementById("memberSelect");
     const button = document.getElementById("boostButton");
     const count = document.getElementById("count");
     const message = document.getElementById("message");
 
-    // If the link has ?member=president, select that member automatically.
+    // Select a member automatically from the link
     const params = new URLSearchParams(window.location.search);
     const requestedMember = params.get("member");
 
@@ -165,46 +151,52 @@ window.stucoClient = stucoClient;
       select.value = requestedMember;
     }
 
+    // Load the current boost total
     async function loadCount() {
-      const { data, error } = await supabase
+      const { data, error } = await stucoClient
         .from("member_boosts")
         .select("boosts")
         .eq("member_slug", select.value)
         .single();
 
       if (error) {
-        message.textContent = "Couldn't load the count. Check your connection.";
-        console.error(error);
+        message.textContent = "Couldn't load the count. Please try again.";
+        console.error("Load error:", error);
         return;
       }
 
       count.textContent = data.boosts;
     }
 
+    // Update count when a different member is selected
     select.addEventListener("change", () => {
       message.textContent = "Ready to boost!";
       loadCount();
     });
 
+    // Add one boost
     button.addEventListener("click", async () => {
       button.disabled = true;
       message.textContent = "Adding your boost...";
 
-      const { data, error } = await supabase.rpc("boost_member", {
-        p_member_slug: select.value
-      });
+      try {
+        const { data, error } = await stucoClient.rpc("boost_member", {
+          p_member_slug: select.value
+        });
 
-      if (error) {
-        message.textContent = "Boost didn't go through. Please try again.";
-        console.error(error);
-      } else {
+        if (error) throw error;
+
         count.textContent = data;
         message.textContent = "BOOST added! Thank you 💗";
+      } catch (error) {
+        message.textContent = "Boost didn't go through. Please try again.";
+        console.error("Boost error:", error);
+      } finally {
+        button.disabled = false;
       }
-
-      button.disabled = false;
     });
 
+    // Load the first count
     loadCount();
   </script>
 </body>
