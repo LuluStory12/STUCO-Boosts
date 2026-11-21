@@ -143,11 +143,12 @@
  const SUPABASE_URL = "https://gzrqpgxfonnaumudwnyz.supabase.co";
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_qPYjhK35SDaF3UGdT-hGzw_Pq-6ZeP6";
 
-    const supabase = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    );
-window.stucoClient = supabase;
+   const stucoClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
+
+window.stucoClient = stucoClient;
     const select = document.getElementById("memberSelect");
     const button = document.getElementById("boostButton");
     const count = document.getElementById("count");
